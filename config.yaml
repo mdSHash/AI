@@ -1,0 +1,26 @@
+admin_roles:
+- admin
+- teacher
+allowed_file_extensions:
+- pdf
+- txt
+- xlsx
+- docx
+- md
+chunk_overlap: 200
+chunk_size: 1000
+embedding_model: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+file_metadata:
+  4W.txt:
+  - b8822f51-d2e7-46c4-9de2-f2675a21701e
+  Tech_Tips.txt:
+  - 99fcc696-815b-4a10-baf2-b4fb478b4923
+  - 7f2f6877-74b7-4169-a451-c9f9d604a20a
+  - 3dd7098e-ca58-4c39-96d1-267235331e6f
+  WIFI.txt:
+  - 32e1ee27-286a-45ce-b9db-4b0cb2804266
+  - 09b9814d-ce9b-4fcd-8060-97fe49f864e5
+languages:
+- en
+- ar
+persist_directory: ./chroma_db
