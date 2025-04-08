@@ -1,0 +1,3 @@
+WATSONX_APIKEY="lIO6ByOWzc9XpOHM1Fq36jTHiS5XCWZdUl8oDW6yQrNQ"
+WATSONX_URL="https://us-south.ml.cloud.ibm.com"
+PROJECT_ID="80339efc-6347-40d6-a69c-8312af7ad4b4"

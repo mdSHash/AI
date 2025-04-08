@@ -1,0 +1,3 @@
+WATSONX_APIKEY="_DP48HaD54cgNcsLsvK8gvZfdZoflBAv3rWHX-xLKwqD"
+WATSONX_URL="https://eu-gb.ml.cloud.ibm.com"
+PROJECT_ID="097bcfb6-c60a-49ef-9b78-4d8855bd58e3"
