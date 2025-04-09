@@ -729,23 +729,27 @@
                     
                     const isAdmin = ['admin', 'teacher'].includes(currentUser.role);
                     
+                    // In your loadFileList function, update how you render each file
                     data.files.forEach(file => {
                         const fileItem = document.createElement('div');
                         fileItem.className = 'flex justify-between items-center bg-gray-50 p-3 rounded border border-gray-200';
                         
+                        // If file is an object with a filename property (new format)
+                        const fileName = typeof file === 'object' ? file.filename : file;
+                        
                         fileItem.innerHTML = `
                             <div>
                                 <i class="fas fa-file-alt text-indigo-600 mr-2"></i>
-                                <span>${file}</span>
+                                <span>${fileName}</span>
                             </div>
                         `;
                         
                         // Add delete button for admins
                         if (isAdmin) {
                             const deleteBtn = document.createElement('button');
-                            deleteBtn.className = 'text-red-500 hover:text-red-700';
+                            deleteBtn.className = 'text-red-500 hover:text-red-700 ml-3';
                             deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
-                            deleteBtn.addEventListener('click', () => deleteFile(file));
+                            deleteBtn.addEventListener('click', () => deleteFile(fileName));
                             fileItem.querySelector('div').appendChild(deleteBtn);
                         }
                         
@@ -798,29 +802,31 @@
             }
             
             async function deleteFile(filename) {
-                if (!confirm(`Are you sure you want to delete "${filename}"?`)) return;
+                if (!confirm(`Are you sure you want to delete ${filename}?`)) {
+                    return;
+                }
                 
                 try {
                     const response = await fetch('/delete', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'x-access-token': token
+                            'x-access-token': token,
+                            'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ filename })
+                        body: JSON.stringify({ filename: filename })
                     });
                     
                     const data = await response.json();
                     
                     if (!response.ok) {
-                        throw new Error(data.message || 'Deletion failed');
+                        throw new Error(data.message || 'Failed to delete file');
                     }
                     
                     alert('File deleted successfully!');
                     loadFileList();
                     
                 } catch (error) {
-                    alert(`Deletion error: ${error.message}`);
+                    alert(`Error: ${error.message}`);
                 }
             }
             
