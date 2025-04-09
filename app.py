@@ -183,6 +183,9 @@ def upload_document(current_user):
         import json
         metadata = json.loads(metadata)
         
+        # Add uploader information to metadata
+        metadata["uploader_id"] = current_user.id
+        
         if file and allowed_file(file.filename):
             with tempfile.TemporaryDirectory() as temp_dir:
                 filepath = os.path.join(temp_dir, file.filename)
@@ -217,8 +220,15 @@ def delete_document(current_user):
             return jsonify({"error": "No filename provided."}), 400
         
         # Find all entries in file_metadata that match the filename
-        matching_entries = [path for path in file_metadata.keys() 
-                           if os.path.basename(path) == filename]
+        matching_entries = []
+        for path, meta_obj in file_metadata.items():
+            if meta_obj.get('filename') == filename:
+                # Check permissions: admins can delete any file, teachers only their own
+                uploader_id = meta_obj.get('uploader_id')
+                if current_user.role == "admin" or current_user.id == uploader_id:
+                    matching_entries.append(path)
+                elif current_user.role == "teacher" and current_user.id != uploader_id:
+                    return jsonify({"error": "You can only delete files you have uploaded."}), 403
         
         if not matching_entries:
             return jsonify({"error": "File not found in database."}), 404
@@ -226,7 +236,8 @@ def delete_document(current_user):
         # Remove entries from file_metadata and delete from vector DB
         chunk_ids = set()
         for entry in matching_entries:
-            chunk_ids.update(file_metadata.pop(entry, set()))
+            meta_obj = file_metadata.pop(entry, {})
+            chunk_ids.update(meta_obj.get('chunks', set()))
         
         if chunk_ids:
             vector_db.delete(ids=list(chunk_ids))
@@ -245,16 +256,28 @@ def delete_document(current_user):
 @token_required
 def list_files(current_user):
     try:
-        if current_user.role in [UserRole.ADMIN, UserRole.TEACHER]:
-            # Admins and teachers can see all files
-            file_list = list(set(os.path.basename(filepath) for filepath in file_metadata.keys()))
-        else:
-            # Students and parents can only see public documents
-            file_list = []
-            for filepath, meta in file_metadata.items():
-                if meta.get('public', True):  # Default to public if not specified
-                    file_list.append(os.path.basename(filepath))
-            file_list = list(set(file_list))
+        file_list = []
+        
+        for filepath, meta_obj in file_metadata.items():
+            filename = meta_obj.get('filename', os.path.basename(filepath))
+            uploader_id = meta_obj.get('uploader_id')
+            
+            # Determine if this file should be visible to the current user
+            is_visible = False
+            if current_user.role in ["admin", "teacher"]:
+                # Admins can see all files, teachers can see their own uploads
+                is_visible = (current_user.role == "admin") or (current_user.id == uploader_id)
+            else:
+                # Students and parents can only see public documents
+                is_visible = meta_obj.get('public', True)
+            
+            if is_visible:
+                file_info = {
+                    "filename": filename,
+                    "uploader_id": uploader_id,
+                    # Add more fields as needed
+                }
+                file_list.append(file_info)
         
         return jsonify({"files": file_list}), 200
     
